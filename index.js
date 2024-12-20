@@ -73,8 +73,15 @@ function createWindow () {
     }
   });
 
-  //win.loadFile(join(__dirname, 'index.html'));
   win.loadURL(appURL);
+
+  // Link clicks open new windows, let's force them to open links in
+  // the default browser
+  win.webContents.setWindowOpenHandler(({url}) => {
+    console.log('windowOpenHandler: ', url);
+    shell.openExternal(url);
+    return { action: 'deny' }
+  });
 }
 
 // Ensure we're a single instance app
