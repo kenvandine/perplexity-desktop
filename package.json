@@ -1,0 +1,38 @@
+{
+  "name": "perplexity-desktop",
+  "version": "0.0.1",
+  "description": "Perplexity Desktop",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --publish never"
+  },
+  "build": {
+    "asar": false,
+    "linux": {
+      "target": [
+	      "dir"
+      ],
+      "category": "Utility",
+      "artifactName": "${name}_${version}_linux.${ext}"
+    },
+    "extraFiles": [
+      "com.github.kenvandine.${name}.desktop"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kenvandine/perplexity-desktop.git"
+  },
+  "author": "Ken VanDine",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/kenvandine/perplexity-desktop/issues"
+  },
+  "homepage": "https://github.com/kenvandine/perplexity-desktop#readme",
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "electron-package": "^0.1.0"
+  }
+}

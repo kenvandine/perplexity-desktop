@@ -1,0 +1,75 @@
+name: perplexity-desktop
+version: git
+summary: Perplexity Desktop
+description: |
+  Unofficial Web app for Perplexity providing the desktop user
+  experience you would expect on Ubuntu or any other Linux desktop
+
+  For microphone access you need to connect the audio-record interface:
+
+    sudo snap connect perplexity-desktop:audio-record
+
+adopt-info: perplexity-desktop
+grade: stable
+confinement: strict
+base: core24
+contact: https://github.com/kenvandine/perplexity-desktop/issues
+issues: https://github.com/kenvandine/perplexity-desktop/issues
+website: https://github.com/kenvandine/perplexity-desktop
+license: GPL-3.0+
+icon: icon512.png
+
+platforms:
+  amd64:
+  arm64:
+compression: lzo
+
+parts:
+  perplexity-desktop:
+    plugin: nil
+    source: .
+    build-packages:
+      - npm
+      - git
+    override-build: |
+      npm install
+      npm run build
+      mkdir -p $SNAPCRAFT_PART_INSTALL/unpacked
+      cp $SNAPCRAFT_PROJECT_DIR/com.github.kenvandine.perplexity-desktop.desktop $SNAPCRAFT_PART_INSTALL/unpacked/
+      cp $SNAPCRAFT_PROJECT_DIR/icon1024.png $SNAPCRAFT_PART_INSTALL/
+      mv dist/linux*-unpacked/* $SNAPCRAFT_PART_INSTALL/unpacked 
+    prime:
+      - unpacked
+      - icon*.png
+      - -*/chrome-sandbox
+      - -*/resources/app.asar.unpacked/node_modules/sharp/vendor/lib
+      - -*/resources/app.asar.unpacked/node_modules/sharp/vendor/include
+
+  cleanup:
+    after: [ perplexity-desktop ]
+    plugin: nil
+    build-snaps: [ gnome-46-2404 ]
+    override-prime: |
+        set -eux
+        cd /snap/gnome-46-2404/current
+        find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/{} \;
+
+plugs:
+  shmem:
+    interface: shared-memory
+    private: true
+
+apps:
+  perplexity-desktop:
+    extensions: [gnome]
+    desktop: unpacked/com.github.kenvandine.perplexity-desktop.desktop
+    command: unpacked/perplexity-desktop --use-tray-icon --no-sandbox --disable-seccomp-filter-sandbox
+    plugs:
+      - shmem
+      - network
+      - audio-playback
+      - audio-record
+      - unity7
+    environment:
+      GTK_USE_PORTAL: "1"
+      TMPDIR: $XDG_RUNTIME_DIR
