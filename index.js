@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell } = require('electron');
 const { join } = require('path');
+const fs = require('fs');
 
 let tray = null;
 let win = null;
@@ -41,6 +42,12 @@ function createWindow () {
       }
     },
     { type: 'separator' },
+    { label: 'About',
+      click: () => {
+	console.log("About clicked");
+	createAboutWindow();
+      }
+    },
     { label: 'Quit',
       click: () => {
 	console.log("Quit clicked, Exiting");
@@ -95,6 +102,66 @@ if (!firstInstance) {
     win.show();
   });
 }
+
+function createAboutWindow() {
+  const aboutWindow = new BrowserWindow({
+    width: 500,
+    height: 300,
+    title: 'About',
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+    modal: true,  // Make the About window modal
+    parent: win  // Set the main window as parent
+  });
+
+  aboutWindow.loadFile('about.html');
+  aboutWindow.removeMenu();
+
+  // Read version from package.json
+  const packageJson = JSON.parse(fs.readFileSync(join(__dirname, 'package.json')));
+  const appVersion = packageJson.version;
+  const appDescription = packageJson.description;
+  const appTitle = packageJson.title;
+  const appBugsUrl = packageJson.bugs.url;
+  const appHomePage = packageJson.homepage;
+  const appAuthor = packageJson.author;
+
+  // Send version to the About window
+  aboutWindow.webContents.on('did-finish-load', () => {
+    console.log("did-finish-load", appTitle);
+    aboutWindow.webContents.send('app-version', appVersion);
+    aboutWindow.webContents.send('app-description', appDescription);
+    aboutWindow.webContents.send('app-title', appTitle);
+    aboutWindow.webContents.send('app-bugs-url', appBugsUrl);
+    aboutWindow.webContents.send('app-homepage', appHomePage);
+    aboutWindow.webContents.send('app-author', appAuthor);
+  });
+  // Link clicks open new windows, let's force them to open links in
+  // the default browser
+  aboutWindow.webContents.setWindowOpenHandler(({url}) => {
+    console.log('windowOpenHandler: ', url);
+    shell.openExternal(url);
+    return { action: 'deny' }
+  });
+}
+
+ipcMain.on('get-app-metadata', (event) => {
+    const packageJson = JSON.parse(fs.readFileSync(join(__dirname, 'package.json')));
+    const appVersion = packageJson.version;
+    const appDescription = packageJson.description;
+    const appTitle = packageJson.title;
+    const appBugsUrl = packageJson.bugs.url;
+    const appHomePage = packageJson.homepage;
+    const appAuthor = packageJson.author;
+    event.sender.send('app-version', appVersion);
+    event.sender.send('app-description', appDescription);
+    event.sender.send('app-title', appTitle);
+    event.sender.send('app-bugs-url', appBugsUrl);
+    event.sender.send('app-homepage', appHomePage);
+    event.sender.send('app-author', appAuthor);
+});
 
 app.whenReady().then(createWindow);
 
