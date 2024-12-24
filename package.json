@@ -1,7 +1,8 @@
 {
   "name": "perplexity-desktop",
   "version": "0.0.1",
-  "description": "Perplexity Desktop",
+  "title": "Perplexity Desktop",
+  "description": "Unofficial Web app for Perplexity AI providing the desktop user experience you would expect on Ubuntu or any other Linux desktop.",
   "main": "index.js",
   "scripts": {
     "start": "electron .",
