@@ -10,6 +10,9 @@ This project and its contributors are not affiliated with Perplexity. This is si
 
 [![Get it from the Snap Store](https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white.png)](https://snapcraft.io/perplexity-desktop)
 
+[![perplexity-desktop](https://snapcraft.io/perplexity-desktop/badge.svg)](https://snapcraft.io/perplexity-desktop)
+[![perplexity-desktop](https://snapcraft.io/perplexity-desktop/trending.svg?name=0)](https://snapcraft.io/perplexity-desktop)
+
 ## Requirements
 
 You will need to install [npm](https://www.npmjs.com/), the Node.js package manager. On most distributions, the package is simply called `npm`.
