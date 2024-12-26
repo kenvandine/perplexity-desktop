@@ -32,7 +32,9 @@ parts:
       - git
     override-pull: |
       craftctl default
-      craftctl set version=$(git describe --tags --abbrev=10)
+      VERSION=$(git describe --tags --abbrev=10)
+      craftctl set version=$VERSION
+      sed -i.bak -e "s|@@VERSION@@|$VERSION|g" $CRAFT_PART_SRC/package.json
     override-build: |
       npm install
       npm run build
