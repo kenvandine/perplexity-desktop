@@ -72,11 +72,13 @@ apps:
     desktop: unpacked/com.github.kenvandine.perplexity-desktop.desktop
     command: unpacked/perplexity-desktop --use-tray-icon --no-sandbox --disable-seccomp-filter-sandbox
     plugs:
-      - shmem
-      - network
       - audio-playback
       - audio-record
+      - home
+      - network
+      - shmem
       - unity7
     environment:
       GTK_USE_PORTAL: "1"
       TMPDIR: $XDG_RUNTIME_DIR
+      HOME: $SNAP_REAL_HOME
