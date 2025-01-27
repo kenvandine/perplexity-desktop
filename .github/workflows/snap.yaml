@@ -3,6 +3,8 @@ name: Snap
 on:
   push:
     branches: [main]
+  release:
+    types: [published]
 
 jobs:
   build-amd64:
