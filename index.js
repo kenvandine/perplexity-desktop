@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain, shell } = require('electron');
 const { join } = require('path');
 const fs = require('fs');
 
@@ -7,10 +7,19 @@ let win = null;
 const appURL = 'https://perplexity.ai'
 
 function createWindow () {
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { x, y, width, height } = primaryDisplay.bounds
+
+  // Log geometry information for easier debugging
+  console.log(`Primary Screen Geometry - Width: ${width} Height: ${height} X: ${x} Y: ${y}`);
+
   const icon = nativeImage.createFromPath(join(__dirname, 'icon1024.png'));
+
   win = new BrowserWindow({
-    width: 800,
-    height: 800,
+    width: width * 0.6,
+    height: height * 0.8,
+    x: x + ((width - (width * 0.6)) / 2),
+    y: y + ((height - (height * 0.8)) / 2),
     icon: icon,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
@@ -104,9 +113,14 @@ if (!firstInstance) {
 }
 
 function createAboutWindow() {
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { x, y, width, height } = primaryDisplay.bounds
+
   const aboutWindow = new BrowserWindow({
     width: 500,
     height: 300,
+    x: x + ((width - 500) / 2),
+    y: y + ((height - 500) / 2),
     title: 'About',
     webPreferences: {
       nodeIntegration: true,
