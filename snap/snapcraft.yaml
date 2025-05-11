@@ -52,6 +52,12 @@ parts:
       - -*/resources/app.asar.unpacked/node_modules/sharp/vendor/lib
       - -*/resources/app.asar.unpacked/node_modules/sharp/vendor/include
 
+  launcher:
+    plugin: dump
+    source: launcher
+    override-build: |
+      cp launcher $CRAFT_PART_INSTALL/
+
   cleanup:
     after: [ perplexity-desktop ]
     plugin: nil
@@ -70,7 +76,7 @@ apps:
   perplexity-desktop:
     extensions: [gnome]
     desktop: unpacked/com.github.kenvandine.perplexity-desktop.desktop
-    command: unpacked/perplexity-desktop --use-tray-icon --no-sandbox --disable-seccomp-filter-sandbox
+    command: launcher
     plugs:
       - audio-playback
       - audio-record
