@@ -189,3 +189,8 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+app.on('ready', () => {
+  console.log(`Electron Version: ${process.versions.electron}`);
+  console.log(`App Version: ${app.getVersion()}`);
+});
