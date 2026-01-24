@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain, shell, globalShortcut } = require('electron');
 const { join } = require('path');
 const fs = require('fs');
 
@@ -107,6 +107,14 @@ function createWindow () {
   });
 
   win.loadURL(appURL);
+
+  app.whenReady().then(() => {
+    globalShortcut.register('CommandOrControl+H', () => {
+      if (win) {
+        win.loadURL('https://www.perplexity.ai'); // jump back to home
+      }
+    });
+  });
 
   // Link clicks open new windows, let's force them to open links in
   // the default browser
