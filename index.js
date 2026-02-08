@@ -109,11 +109,15 @@ function createWindow () {
   win.loadURL(appURL);
 
   if (!globalShortcut.isRegistered('CommandOrControl+H')) {
-    globalShortcut.register('CommandOrControl+H', () => {
+    const shortcutRegistered = globalShortcut.register('CommandOrControl+H', () => {
       if (win) {
         win.loadURL('https://www.perplexity.ai'); // jump back to home
       }
     });
+
+    if (!shortcutRegistered) {
+      console.warn('Failed to register global shortcut "CommandOrControl+H". It may already be in use or unavailable on this system.');
+    }
   }
 
   // Link clicks open new windows, let's force them to open links in
