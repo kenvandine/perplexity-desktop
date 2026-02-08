@@ -108,13 +108,13 @@ function createWindow () {
 
   win.loadURL(appURL);
 
-  app.whenReady().then(() => {
+  if (!globalShortcut.isRegistered('CommandOrControl+H')) {
     globalShortcut.register('CommandOrControl+H', () => {
       if (win) {
-        win.loadURL(appURL); // jump back to home
+        win.loadURL('https://www.perplexity.ai'); // jump back to home
       }
     });
-  });
+  }
 
   // Link clicks open new windows, let's force them to open links in
   // the default browser
