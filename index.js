@@ -111,7 +111,7 @@ function createWindow () {
   app.whenReady().then(() => {
     globalShortcut.register('CommandOrControl+H', () => {
       if (win) {
-        win.loadURL('https://www.perplexity.ai'); // jump back to home
+        win.loadURL(appURL); // jump back to home
       }
     });
   });
