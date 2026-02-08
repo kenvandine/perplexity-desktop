@@ -28,7 +28,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Listen for click events and open non-allowed links externally
     document.addEventListener('click', (event) => {
-        const link = event.target.closest('a');
+        let link = null;
+        if (event.target instanceof Element) {
+            link = event.target.closest('a');
+        } else if (typeof event.composedPath === 'function') {
+            const path = event.composedPath();
+            for (const node of path) {
+                if (node instanceof Element && node.tagName === 'A') {
+                    link = node;
+                    break;
+                }
+            }
+        }
+
         if (link && link.href && link.href.startsWith('http')) {
             try {
                 const host = new URL(link.href).host;
