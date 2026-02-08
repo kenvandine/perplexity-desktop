@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain, shell, globalShortcut } = require('electron');
 const { join } = require('path');
 const fs = require('fs');
 
@@ -108,6 +108,21 @@ function createWindow () {
 
   win.loadURL(appURL);
 
+  if (!globalShortcut.isRegistered('CommandOrControl+H')) {
+    const shortcutRegistered = globalShortcut.register('CommandOrControl+H', () => {
+      if (win) {
+        win.loadURL('https://www.perplexity.ai'); // jump back to home
+      }
+    });
+
+    if (!shortcutRegistered) {
+      console.warn('Failed to register global shortcut "CommandOrControl+H". It may already be in use or unavailable on this system.');
+    }
+  }
+
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+  });
   // Link clicks open new windows, let's force them to open links in
   // the default browser
   win.webContents.setWindowOpenHandler(({url}) => {
