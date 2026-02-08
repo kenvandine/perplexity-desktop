@@ -4,7 +4,97 @@ const fs = require('fs');
 
 let tray = null;
 let win = null;
+let wasOffline = false;
 const appURL = 'https://perplexity.ai'
+const icon = nativeImage.createFromPath(join(__dirname, 'icon1024.png'));
+
+// IPC listeners (registered once, outside createWindow to avoid leaks)
+ipcMain.on('zoom-in', () => {
+  console.log('zoom-in');
+  if (!win || win.isDestroyed()) {
+    console.warn('zoom-in: window does not exist or is destroyed');
+    return;
+  }
+  const currentZoom = win.webContents.getZoomLevel();
+  win.webContents.setZoomLevel(currentZoom + 1);
+});
+
+ipcMain.on('zoom-out', () => {
+  console.log('zoom-out');
+  if (!win || win.isDestroyed()) {
+    console.warn('zoom-out: window does not exist or is destroyed');
+    return;
+  }
+  const currentZoom = win.webContents.getZoomLevel();
+  win.webContents.setZoomLevel(currentZoom - 1);
+});
+
+ipcMain.on('zoom-reset', () => {
+  console.log('zoom-reset');
+  if (!win || win.isDestroyed()) {
+    console.warn('zoom-reset: window does not exist or is destroyed');
+    return;
+  }
+  win.webContents.setZoomLevel(0);
+});
+
+ipcMain.on('log-message', (event, message) => {
+  console.log('Log from preload: ', message);
+});
+
+// Open links with default browser
+ipcMain.on('open-external-link', (event, url) => {
+  console.log('open-external-link: ', url);
+
+  if (typeof url !== 'string' || !url) {
+    console.warn('open-external-link: invalid URL value received');
+    return;
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+  } catch (e) {
+    console.warn('open-external-link: failed to parse URL', e);
+    return;
+  }
+
+  const allowedProtocols = new Set(['http:', 'https:']);
+  if (!allowedProtocols.has(parsedUrl.protocol)) {
+    console.warn('open-external-link: blocked URL with disallowed protocol:', parsedUrl.protocol);
+    return;
+  }
+
+  shell.openExternal(parsedUrl.toString());
+});
+
+// Retry connection from offline page
+ipcMain.on('retry-connection', () => {
+  console.log('Retrying connection...');
+  if (!win || win.isDestroyed()) {
+    console.warn('retry-connection: window does not exist or is destroyed');
+    return;
+  }
+  wasOffline = false;
+  win.loadURL(appURL);
+});
+
+// Listen for network status updates from the preload script
+// Only act on transitions to avoid reload loops
+ipcMain.on('network-status', (event, isOnline) => {
+  console.log(`Network status: ${isOnline ? 'online' : 'offline'}`);
+  if (!win || win.isDestroyed()) {
+    console.warn('network-status: window does not exist or is destroyed');
+    return;
+  }
+  if (isOnline && wasOffline) {
+    wasOffline = false;
+    win.loadURL(appURL);
+  } else if (!isOnline && !wasOffline) {
+    wasOffline = true;
+    win.loadFile('offline.html');
+  }
+});
 
 function createWindow () {
   const primaryDisplay = screen.getPrimaryDisplay()
@@ -12,8 +102,6 @@ function createWindow () {
 
   // Log geometry information for easier debugging
   console.log(`Primary Screen Geometry - Width: ${width} Height: ${height} X: ${x} Y: ${y}`);
-
-  const icon = nativeImage.createFromPath(join(__dirname, 'icon1024.png'));
 
   win = new BrowserWindow({
     width: width * 0.6,
@@ -68,52 +156,96 @@ function createWindow () {
   tray.setToolTip('Perplexity');
   tray.setContextMenu(contextMenu);
 
-  ipcMain.on('zoom-in', () => {
-    console.log('zoom-in');
-    const currentZoom = win.webContents.getZoomLevel();
-    win.webContents.setZoomLevel(currentZoom + 1);
-  });
-
-  ipcMain.on('zoom-out', () => {
-    console.log('zoom-out');
-    const currentZoom = win.webContents.getZoomLevel();
-    win.webContents.setZoomLevel(currentZoom - 1);
-  });
-
-  ipcMain.on('zoom-reset', () => {
-    console.log('zoom-reset');
-    win.webContents.setZoomLevel(0);
-  });
-
-  ipcMain.on('log-message', (event, message) => {
-    console.log('Log from preload: ', message);
-  });
-
-  // Open links with default browser
-  ipcMain.on('open-external-link', (event, url) => {
-    console.log('open-external-link: ', url);
-    shell.openExternal(url);
-  });
-
-  // Listen for network status updates from the renderer process
-  ipcMain.on('network-status', (event, isOnline) => {
-    console.log(`Network status: ${isOnline ? 'online' : 'offline'}`);
-    console.log("network-status changed: " + isOnline);
-    if (isOnline) {
-      win.loadURL(appURL);
-    } else {
-      win.loadFile('offline.html');
-    }
-  });
-
   win.loadURL(appURL);
 
-  // Link clicks open new windows, let's force them to open links in
-  // the default browser
+  // Show offline page if the main-frame URL fails to load (e.g. no internet)
+  win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+    console.log(`did-fail-load: ${errorDescription} (${errorCode}) for ${validatedURL}`);
+
+    // Ignore aborted/intentional navigations (e.g. redirects, will-navigate cancellations)
+    if (errorCode === -3) {
+      return;
+    }
+
+    // Only treat real main-frame load failures as offline
+    if (!isMainFrame || !validatedURL) {
+      return;
+    }
+
+    wasOffline = true;
+    win.loadFile('offline.html');
+  });
+
+  // Hosts allowed to navigate within the Electron window
+  const allowedHosts = new Set([
+    'perplexity.ai',
+    'www.perplexity.ai',
+    'accounts.google.com',
+    'appleid.apple.com',
+  ]);
+
+  // Intercept navigation and only allow app + auth hosts in-app
+  win.webContents.on('will-navigate', (event, url) => {
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch (e) {
+      // If URL parsing fails, allow the navigation rather than crashing.
+      return;
+    }
+
+    const protocol = parsedUrl.protocol;
+
+    // Always allow file: navigations (e.g., offline.html).
+    if (protocol === 'file:') {
+      return;
+    }
+
+    // Only enforce host allowlist for http/https URLs.
+    if (protocol === 'http:' || protocol === 'https:') {
+      const targetHost = parsedUrl.host;
+      if (!allowedHosts.has(targetHost)) {
+        console.log('will-navigate external: ', url);
+        event.preventDefault();
+        shell.openExternal(url);
+      }
+      return;
+    }
+
+    // For any other protocol, open externally.
+    console.log('will-navigate external (non-http/https): ', url);
+    event.preventDefault();
+    shell.openExternal(url);
+  });
+
+  // New-window requests (window.open / target="_blank"): only keep the
+  // app host in-app; open only safe http(s) URLs in the default browser,
+  // and block everything else (including malformed or non-http(s) schemes).
   win.webContents.setWindowOpenHandler(({url}) => {
     console.log('windowOpenHandler: ', url);
-    shell.openExternal(url);
-    return { action: 'deny' }
+    try {
+      const parsed = new URL(url);
+      const host = parsed.host;
+      const protocol = parsed.protocol;
+      const appHost = new URL(appURL).host;
+
+      // Keep navigation within the app for same-host URLs
+      if (host === appHost) {
+        win.loadURL(url);
+        return { action: 'deny' };
+      }
+
+      // Only open external URLs for safe http/https schemes
+      if (protocol === 'http:' || protocol === 'https:') {
+        shell.openExternal(url);
+      } else {
+        console.warn('Blocked external URL with unsafe scheme:', url);
+      }
+    } catch (e) {
+      // If URL parsing fails, deny the request instead of opening externally
+      console.warn('Failed to parse URL in setWindowOpenHandler, denying:', url, e);
+    }
+    return { action: 'deny' };
   });
 
   win.webContents.on('before-input-event', (event, input) => {
@@ -133,7 +265,21 @@ if (!firstInstance) {
 } else {
   app.on("second-instance", (event) => {
     console.log("second-instance");
-    win.show();
+
+    // If the window doesn't exist yet or has been destroyed, create it
+    if (!win || win.isDestroyed()) {
+      createWindow();
+      return;
+    }
+
+    // Restore and show the existing window, then focus it
+    if (win.isMinimized()) {
+      win.restore();
+    }
+    if (!win.isVisible()) {
+      win.show();
+    }
+    win.focus();
   });
 }
 
@@ -143,9 +289,9 @@ function createAboutWindow() {
 
   const aboutWindow = new BrowserWindow({
     width: 500,
-    height: 300,
+    height: 420,
     x: x + ((width - 500) / 2),
-    y: y + ((height - 500) / 2),
+    y: y + ((height - 420) / 2),
     title: 'About',
     webPreferences: {
       nodeIntegration: true,
