@@ -120,6 +120,9 @@ function createWindow () {
     }
   }
 
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+  });
   // Link clicks open new windows, let's force them to open links in
   // the default browser
   win.webContents.setWindowOpenHandler(({url}) => {
