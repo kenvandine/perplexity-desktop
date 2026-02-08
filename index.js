@@ -245,7 +245,7 @@ function createWindow () {
       // If URL parsing fails, deny the request instead of opening externally
       console.warn('Failed to parse URL in setWindowOpenHandler, denying:', url, e);
     }
-    return { action: 'deny' }
+    return { action: 'deny' };
   });
 
   win.webContents.on('before-input-event', (event, input) => {
