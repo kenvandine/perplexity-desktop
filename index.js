@@ -7,6 +7,8 @@ let win = null;
 let wasOffline = false;
 const appURL = 'https://perplexity.ai'
 const icon = nativeImage.createFromPath(join(__dirname, 'icon1024.png'));
+const isScreenshotMode = process.env.TEST_SCREENSHOT === '1';
+const screenshotPath = process.env.SCREENSHOT_PATH || 'screenshot.png';
 
 // IPC listeners (registered once, outside createWindow to avoid leaks)
 ipcMain.on('zoom-in', () => {
@@ -104,11 +106,12 @@ function createWindow () {
   console.log(`Primary Screen Geometry - Width: ${width} Height: ${height} X: ${x} Y: ${y}`);
 
   win = new BrowserWindow({
-    width: width * 0.6,
-    height: height * 0.8,
-    x: x + ((width - (width * 0.6)) / 2),
-    y: y + ((height - (height * 0.8)) / 2),
+    width: isScreenshotMode ? 1920 : width * 0.6,
+    height: isScreenshotMode ? 1080 : height * 0.8,
+    x: isScreenshotMode ? undefined : x + ((width - (width * 0.6)) / 2),
+    y: isScreenshotMode ? undefined : y + ((height - (height * 0.8)) / 2),
     icon: icon,
+    show: isScreenshotMode ? false : undefined,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       nodeIntegration: true,
@@ -120,10 +123,12 @@ function createWindow () {
   win.removeMenu();
 
   win.on('close', (event) => {
+    if (isScreenshotMode) return;
     event.preventDefault();
     win.hide();
   });
 
+  if (!isScreenshotMode) {
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
@@ -155,6 +160,7 @@ function createWindow () {
 
   tray.setToolTip('Perplexity');
   tray.setContextMenu(contextMenu);
+  }
 
   win.loadURL(appURL);
 
@@ -172,8 +178,40 @@ function createWindow () {
       return;
     }
 
+    if (isScreenshotMode) {
+      setTimeout(async () => {
+        try {
+          const image = await win.capturePage();
+          fs.writeFileSync(screenshotPath, image.toPNG());
+          console.log(`Screenshot of error state saved to ${screenshotPath}`);
+        } catch (error) {
+          console.error('Error capturing error screenshot:', error);
+        }
+        app.exit(1);
+      }, 2000);
+      return;
+    }
+
     wasOffline = true;
     win.loadFile('offline.html');
+  });
+
+  win.webContents.on('did-finish-load', () => {
+    if (isScreenshotMode) {
+      console.log('Screenshot mode: waiting 5 seconds for content to render...');
+      setTimeout(async () => {
+        try {
+          console.log('Capturing screenshot...');
+          const image = await win.capturePage();
+          fs.writeFileSync(screenshotPath, image.toPNG());
+          console.log(`Screenshot saved to ${screenshotPath}`);
+          app.quit();
+        } catch (error) {
+          console.error('Error capturing screenshot:', error);
+          app.exit(1);
+        }
+      }, 5000);
+    }
   });
 
   // Hosts allowed to navigate within the Electron window
