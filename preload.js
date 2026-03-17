@@ -80,3 +80,30 @@ document.addEventListener('wheel', (event) => {
         }
     }
 });
+
+const fs = require('fs');
+const path = require('path');
+
+function injectSidebar() {
+  const filePath = path.join(__dirname, 'sidebar-inject.js');
+  console.log('PRELOAD: attempting inject from', filePath);
+  
+  if (!document.querySelector('nav')) {
+    console.log('PRELOAD: nav not found, retrying...');
+    setTimeout(injectSidebar, 500);
+    return;
+  }
+
+  try {
+    const code = fs.readFileSync(filePath, 'utf8');
+    console.log('PRELOAD: file read OK, length=', code.length);
+    const script = document.createElement('script');
+    script.textContent = code;
+    document.head.appendChild(script);
+    console.log('PRELOAD: injected OK');
+  } catch(e) {
+    console.error('PRELOAD: failed -', e.message);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => setTimeout(injectSidebar, 1000));

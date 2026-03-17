@@ -284,6 +284,9 @@ function createWindow () {
   });
 
   win.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12') {
+      win.webContents.openDevTools();
+    }
     if (input.control && input.key.toLowerCase() === 'r') {
       console.log('Pressed Control+R')
       event.preventDefault()
