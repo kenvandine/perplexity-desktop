@@ -26,6 +26,25 @@
             max-width: 420px;
             width: 100%;
             text-align: center;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: #8b8b8e;
+            font-size: 20px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-btn:hover {
+            color: #ffffff;
         }
         .app-icon {
             width: 80px;
@@ -85,6 +104,7 @@
 </head>
 <body>
     <div class="about-container">
+        <button class="close-btn" onclick="window.close();">&times;</button>
         <img class="app-icon" src="icon1024.png" alt="Perplexity">
         <div class="about-header"><span id="app-title"></span></div>
         <div class="about-version">Version <span id="app-version"></span></div>
@@ -94,6 +114,13 @@
     </div>
     <script>
         const { ipcRenderer } = require('electron');
+
+        // Handle ESC key to close the window
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                window.close();
+            }
+        });
 
         // Receive metadata from main process
         ipcRenderer.on('app-version', (event, version) => {
