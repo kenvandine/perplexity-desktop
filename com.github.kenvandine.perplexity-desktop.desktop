@@ -4,6 +4,7 @@ Name=Perplexity
 Comment=Perplexity Desktop
 Type=Application
 Exec=perplexity-desktop
-Icon=${SNAP}/unpacked/resources/app/icon1024.png
+Icon=icon1024.png
 Categories=Accessories;
 Keywords=AI;Copilot;GPT;ChatGPT;Gemini;Perplexity;Search;
+

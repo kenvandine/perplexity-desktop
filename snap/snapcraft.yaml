@@ -73,6 +73,8 @@ plugs:
   shmem:
     interface: shared-memory
     private: true
+  desktop:
+    interface: desktop
 
 apps:
   perplexity-desktop:
@@ -83,6 +85,7 @@ apps:
     plugs:
       - audio-playback
       - audio-record
+      - desktop
       - home
       - network
       - shmem
