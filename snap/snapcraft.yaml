@@ -87,6 +87,7 @@ apps:
       - network
       - shmem
       - unity7
+      - login-session-observe
     environment:
       GTK_USE_PORTAL: "1"
       TMPDIR: $XDG_RUNTIME_DIR
