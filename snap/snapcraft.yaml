@@ -67,7 +67,7 @@ parts:
     override-prime: |
         set -eux
         cd /snap/gnome-46-2404/current
-        find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/{} \;
+        find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/{} \
 
 plugs:
   shmem:
@@ -91,3 +91,4 @@ apps:
       GTK_USE_PORTAL: "1"
       TMPDIR: $XDG_RUNTIME_DIR
       HOME: $SNAP_REAL_HOME
+
