@@ -16,7 +16,7 @@ contact: https://github.com/kenvandine/perplexity-desktop/issues
 issues: https://github.com/kenvandine/perplexity-desktop/issues
 website: https://github.com/kenvandine/perplexity-desktop
 license: GPL-3.0+
-icon: icon512.png
+icon: icon1024.png
 
 platforms:
   amd64:
@@ -91,3 +91,4 @@ apps:
       GTK_USE_PORTAL: "1"
       TMPDIR: $XDG_RUNTIME_DIR
       HOME: $SNAP_REAL_HOME
+
