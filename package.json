@@ -1,40 +1,21 @@
 {
   "name": "perplexity-desktop",
-  "version": "@@VERSION@@",
-  "title": "Perplexity Desktop",
-  "description": "Unofficial Web app for Perplexity AI providing the desktop user experience you would expect on Ubuntu or any other Linux desktop.",
+  "version": "0.1.0",
+  "description": "Unofficial Perplexity Desktop Application",
   "main": "index.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --publish never",
-    "screenshot": "TEST_SCREENSHOT=1 electron ."
+    "build": "electron-builder",
+    "dist": "electron-builder --win --mac --linux",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "build": {
-    "asar": false,
-    "linux": {
-      "target": [
-	      "dir"
-      ],
-      "category": "Utility",
-      "artifactName": "${name}_${version}_linux.${ext}"
-    },
-    "extraFiles": [
-      "com.github.kenvandine.${name}.desktop"
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kenvandine/perplexity-desktop.git"
-  },
-  "author": "Ken VanDine",
+  "author": "kenvandine",
   "license": "GPL-3.0",
-  "bugs": {
-    "url": "https://github.com/kenvandine/perplexity-desktop/issues"
-  },
-  "homepage": "https://github.com/kenvandine/perplexity-desktop#readme",
   "devDependencies": {
-    "electron": "^40.2.1",
-    "electron-builder": "^26.7.0",
-    "electron-package": "^0.1.0"
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "1.0.0"
   }
 }
